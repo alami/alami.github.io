@@ -45,3 +45,6 @@ Back Миграции
 ? как сервер уведомлений привязывается к конкретному устройству
 
  Sender ID который мы получили после регистрации в Firebase.
+
+
+ https://codelabs.developers.google.com/codelabs/firebase-web-ru/
