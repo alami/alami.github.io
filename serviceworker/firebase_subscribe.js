@@ -1,8 +1,7 @@
-// firebase_subscribe.js
+//-- firebase_subscribe.js - пример скрипта подписки на уведомления
 firebase.initializeApp({
     messagingSenderId: '<SENDER_ID>'
 });
-
 // браузер поддерживает уведомления
 // вообще, эту проверку должна делать библиотека Firebase, но она этого не делает
 if ('Notification' in window) {

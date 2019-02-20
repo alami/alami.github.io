@@ -1,3 +1,4 @@
+//-- скрипт подписки на уведомления--  на примере firebase_subscribe.js --
 firebase.initializeApp({
     messagingSenderId: '800999588046'
 });
@@ -35,21 +36,24 @@ function addZero(i) {
 setNotificationDemoBody();
 resetUI();
 
-if (
-    'Notification' in window &&
+// браузер поддерживает уведомления
+// вообще, эту проверку должна делать библиотека Firebase, но она этого не делает
+if ('Notification' in window &&
     'serviceWorker' in navigator &&
     'localStorage' in window &&
     'fetch' in window &&
-    'postMessage' in window
-) {
+    'postMessage' in window ) {
     var messaging = firebase.messaging();
 
-    // already granted
+    // пользователь уже разрешил получение уведомлений - already granted
+    // подписываем на уведомления если ещё не подписали
     if (Notification.permission === 'granted') {
         getToken();
     }
 
     // get permission on subscribe only once
+    // по клику, запрашиваем у пользователя разрешение на уведомления
+    // и подписываем его
     bt_register.on('click', function() {
         getToken();
     });
@@ -151,35 +155,36 @@ if (
     updateUIForPushPermissionRequired();
 }
 
-
+//---- подписываем пользователя на уведомление subscribe () ----
 function getToken() {
+    // запрашиваем разрешение на получение уведомлений
     messaging.requestPermission()
         .then(function() {
             // Get Instance ID token. Initially this makes a network call, once retrieved
             // subsequent calls to getToken will return from cache.
+            // получаем ID устройства
             messaging.getToken()
                 .then(function(currentToken) {
 
                     if (currentToken) {
                         sendTokenToServer(currentToken);
                         updateUIForPushEnabled(currentToken);
-                    } else {
+                    } else { // Не удалось получить токен.
                         showError('No Instance ID token available. Request permission to generate one');
                         updateUIForPushPermissionRequired();
                         setTokenSentToServer(false);
                     }
                 })
-                .catch(function(error) {
+                .catch(function(error) { //При получении токена произошла ошибка.
                     showError('An error occurred while retrieving token', error);
                     updateUIForPushPermissionRequired();
                     setTokenSentToServer(false);
                 });
         })
-        .catch(function(error) {
+        .catch(function(error) { //Не удалось получить разрешение на показ уведомлений.
             showError('Unable to get permission to notify', error);
         });
 }
-
 
 function sendNotification(notification) {
     var key = 'AAAAun9LwM4:APA91bG25LzathhUdcunVffcGPWzg7L3XqFwBz4xBu8JlFOwzZ6UCz1F7y54aMmnLvtXKNUjJOD0NPMPghUCZI3WoAUQtuxg1CqkuhwBVmFzleJOEvV3FyH-lZPaaCcLPyt-Z-zWkKWR';
@@ -225,24 +230,29 @@ function sendNotification(notification) {
         });
 }
 
+// отправка ID на сервер
 // Send the Instance ID token your application server, so that it can:
 // - send messages back to this app
 // - subscribe/unsubscribe the token from topics
 function sendTokenToServer(currentToken) {
     if (!isTokenSentToServer(currentToken)) {
-        console.log('Sending token to server...');
+        console.log('Sending token to server...'); //Отправка токена на сервер...
+        //// url - адрес скрипта на сервере который сохраняет ID устройства
         // send current token to server
         //$.post(url, {token: currentToken});
         setTokenSentToServer(currentToken);
-    } else {
+    } else { // Токен уже отправлен на сервер.
         console.log('Token already sent to server so won\'t send it again unless it changes');
     }
 }
-
+// используем localStorage для отметки того,
+// что пользователь уже подписался на уведомления
 function isTokenSentToServer(currentToken) {
     return window.localStorage.getItem('sentFirebaseMessagingToken') === currentToken;
 }
 
+// используем localStorage для отметки того,
+// что пользователь уже подписался на уведомления
 function setTokenSentToServer(currentToken) {
     if (currentToken) {
         window.localStorage.setItem('sentFirebaseMessagingToken', currentToken);
