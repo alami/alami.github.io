@@ -1,58 +1,62 @@
-//-- на примере firebase_subscribe.js --  скрипт подписки на уведомления--
 firebase.initializeApp({
-    messagingSenderId: '800999588046'
+    messagingSenderId: '448358493027'
 });
-// -- JQuiry маркеры ---------------
-var bt_register = $('#register');//button подписки на уведомления
-var bt_delete = $('#delete');    //button отказа от  уведомления
-var token = $('#token');         //token ?
-var form = $('#notification');   //уведомление
-var massage_id = $('#massage_id');//id
-var massage_row = $('#massage_row');//строка ?
 
-var info = $('#info');             // все ок
+
+var bt_register = $('#register');
+var bt_delete = $('#delete');
+var token = $('#token');
+var form = $('#notification');
+var massage_id = $('#massage_id');
+var massage_row = $('#massage_row');
+
+var info = $('#info');
 var info_message = $('#info-message');
-var alert = $('#alert');           //ошибочка
+
+var alert = $('#alert');
 var alert_message = $('#alert-message');
 
-var input_body = $('#body');         //?
-var timerId = setInterval(setNotificationDemoBody, 10000);//callback через 10сек задержку
+var input_body = $('#body');
+var timerId = setInterval(setNotificationDemoBody, 10000);
 
-function addZero(i) { return i > 9 ? i : '0' + i;}  // просто минуты с ведущим 0-ем
-function setNotificationDemoBody() {  // Демо установки уведомления
-    if (input_body.val().search(/^It's found today at \d\d:\d\d$/i) !== -1) { // найдено сегодня в ??:??
+function setNotificationDemoBody() {
+    if (input_body.val().search(/^It's found today at \d\d:\d\d$/i) !== -1) {
         var now = new Date();
         input_body.val('It\'s found today at ' + now.getHours() + ':' + addZero(now.getMinutes()));
     } else {
-        clearInterval(timerId); // сброс задержки
+        clearInterval(timerId);
     }
 }
-// -------------------------  приложение ------------------------------
+
+function addZero(i) {
+    return i > 9 ? i : '0' + i;
+}
+
 setNotificationDemoBody();
 resetUI();
-// браузер поддерживает уведомления ?
-// вообще, эту проверку должна делать библиотека Firebase, но она этого не делает
-if ('Notification' in window &&
+
+if (
+    'Notification' in window &&
     'serviceWorker' in navigator &&
     'localStorage' in window &&
     'fetch' in window &&
-    'postMessage' in window ) {
+    'postMessage' in window
+) {
     var messaging = firebase.messaging();
 
-    // пользователь уже разрешил получение уведомлений - already granted ?
-    // подписываем на уведомления если ещё не подписали
+    // already granted
     if (Notification.permission === 'granted') {
-        getToken();   // = subscribe ()
+        getToken();
     }
+
     // get permission on subscribe only once
-    bt_register.on('click', function() {  // при нажатии на кнопки  "подписка на уведомления",
-                     // запрашиваем у пользователя разрешение на уведомления только 1 раз
-        getToken();  // = subscribe ()    и подписываем его
+    bt_register.on('click', function() {
+        getToken();
     });
 
-    bt_delete.on('click', function() {// при нажатии на кнопки "отказа от  уведомления"
+    bt_delete.on('click', function() {
         // Delete Instance ID token.
-        messaging.getToken()           // =  Promise = firebase.messaging();
+        messaging.getToken()
             .then(function(currentToken) {
                 messaging.deleteToken(currentToken)
                     .then(function() {
@@ -147,39 +151,38 @@ if ('Notification' in window &&
     updateUIForPushPermissionRequired();
 }
 
-//---- подписываем пользователя на уведомление subscribe () ----
+
 function getToken() {
-    // запрашиваем разрешение на получение уведомлений
     messaging.requestPermission()
         .then(function() {
             // Get Instance ID token. Initially this makes a network call, once retrieved
             // subsequent calls to getToken will return from cache.
-            // получаем ID устройства
             messaging.getToken()
                 .then(function(currentToken) {
 
                     if (currentToken) {
                         sendTokenToServer(currentToken);
                         updateUIForPushEnabled(currentToken);
-                    } else { // Не удалось получить токен.
+                    } else {
                         showError('No Instance ID token available. Request permission to generate one');
                         updateUIForPushPermissionRequired();
                         setTokenSentToServer(false);
                     }
                 })
-                .catch(function(error) { //При получении токена произошла ошибка.
+                .catch(function(error) {
                     showError('An error occurred while retrieving token', error);
                     updateUIForPushPermissionRequired();
                     setTokenSentToServer(false);
                 });
         })
-        .catch(function(error) { //Не удалось получить разрешение на показ уведомлений.
+        .catch(function(error) {
             showError('Unable to get permission to notify', error);
         });
 }
 
+
 function sendNotification(notification) {
-    var key = 'AAAAun9LwM4:APA91bG25LzathhUdcunVffcGPWzg7L3XqFwBz4xBu8JlFOwzZ6UCz1F7y54aMmnLvtXKNUjJOD0NPMPghUCZI3WoAUQtuxg1CqkuhwBVmFzleJOEvV3FyH-lZPaaCcLPyt-Z-zWkKWR';
+    var key = 'AAAAaGQ_q2M:APA91bGCEOduj8HM6gP24w2LEnesqM2zkL_qx2PJUSBjjeGSdJhCrDoJf_WbT7wpQZrynHlESAoZ1VHX9Nro6W_tqpJ3Aw-A292SVe_4Ho7tJQCQxSezDCoJsnqXjoaouMYIwr34vZTs';
 
     console.log('Send notification', notification);
 
@@ -222,29 +225,24 @@ function sendNotification(notification) {
         });
 }
 
-// отправка ID на сервер
 // Send the Instance ID token your application server, so that it can:
 // - send messages back to this app
 // - subscribe/unsubscribe the token from topics
 function sendTokenToServer(currentToken) {
     if (!isTokenSentToServer(currentToken)) {
-        console.log('Sending token to server...'); //Отправка токена на сервер...
-        //// url - адрес скрипта на сервере который сохраняет ID устройства
+        console.log('Sending token to server...');
         // send current token to server
         //$.post(url, {token: currentToken});
         setTokenSentToServer(currentToken);
-    } else { // Токен уже отправлен на сервер.
+    } else {
         console.log('Token already sent to server so won\'t send it again unless it changes');
     }
 }
-// используем localStorage для отметки того,
-// что пользователь уже подписался на уведомления
+
 function isTokenSentToServer(currentToken) {
     return window.localStorage.getItem('sentFirebaseMessagingToken') === currentToken;
 }
 
-// используем localStorage для отметки того,
-// что пользователь уже подписался на уведомления
 function setTokenSentToServer(currentToken) {
     if (currentToken) {
         window.localStorage.setItem('sentFirebaseMessagingToken', currentToken);
