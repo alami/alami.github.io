@@ -1,42 +1,36 @@
-//-- скрипт подписки на уведомления--  на примере firebase_subscribe.js --
+//-- на примере firebase_subscribe.js --  скрипт подписки на уведомления--
 firebase.initializeApp({
     messagingSenderId: '800999588046'
 });
+// -- JQuiry маркеры ---------------
+var bt_register = $('#register');//button подписки на уведомления
+var bt_delete = $('#delete');    //button отказа от  уведомления
+var token = $('#token');         //token ?
+var form = $('#notification');   //уведомление
+var massage_id = $('#massage_id');//id
+var massage_row = $('#massage_row');//строка ?
 
-
-var bt_register = $('#register');
-var bt_delete = $('#delete');
-var token = $('#token');
-var form = $('#notification');
-var massage_id = $('#massage_id');
-var massage_row = $('#massage_row');
-
-var info = $('#info');
+var info = $('#info');             // все ок
 var info_message = $('#info-message');
-
-var alert = $('#alert');
+var alert = $('#alert');           //ошибочка
 var alert_message = $('#alert-message');
 
-var input_body = $('#body');
-var timerId = setInterval(setNotificationDemoBody, 10000);
+var input_body = $('#body');         //?
+var timerId = setInterval(setNotificationDemoBody, 10000);//callback через 10сек задержку
 
-function setNotificationDemoBody() {
-    if (input_body.val().search(/^It's found today at \d\d:\d\d$/i) !== -1) {
+function addZero(i) { return i > 9 ? i : '0' + i;}  // просто минуты с ведущим 0-ем
+function setNotificationDemoBody() {  // Демо установки уведомления
+    if (input_body.val().search(/^It's found today at \d\d:\d\d$/i) !== -1) { // найдено сегодня в ??:??
         var now = new Date();
         input_body.val('It\'s found today at ' + now.getHours() + ':' + addZero(now.getMinutes()));
     } else {
-        clearInterval(timerId);
+        clearInterval(timerId); // сброс задержки
     }
 }
-
-function addZero(i) {
-    return i > 9 ? i : '0' + i;
-}
-
+// -------------------------  приложение ------------------------------
 setNotificationDemoBody();
 resetUI();
-
-// браузер поддерживает уведомления
+// браузер поддерживает уведомления ?
 // вообще, эту проверку должна делать библиотека Firebase, но она этого не делает
 if ('Notification' in window &&
     'serviceWorker' in navigator &&
@@ -45,22 +39,20 @@ if ('Notification' in window &&
     'postMessage' in window ) {
     var messaging = firebase.messaging();
 
-    // пользователь уже разрешил получение уведомлений - already granted
+    // пользователь уже разрешил получение уведомлений - already granted ?
     // подписываем на уведомления если ещё не подписали
     if (Notification.permission === 'granted') {
-        getToken();
+        getToken();   // = subscribe ()
     }
-
     // get permission on subscribe only once
-    // по клику, запрашиваем у пользователя разрешение на уведомления
-    // и подписываем его
-    bt_register.on('click', function() {
-        getToken();
+    bt_register.on('click', function() {  // при нажатии на кнопки  "подписка на уведомления",
+                     // запрашиваем у пользователя разрешение на уведомления только 1 раз
+        getToken();  // = subscribe ()    и подписываем его
     });
 
-    bt_delete.on('click', function() {
+    bt_delete.on('click', function() {// при нажатии на кнопки "отказа от  уведомления"
         // Delete Instance ID token.
-        messaging.getToken()
+        messaging.getToken()           // =  Promise = firebase.messaging();
             .then(function(currentToken) {
                 messaging.deleteToken(currentToken)
                     .then(function() {
